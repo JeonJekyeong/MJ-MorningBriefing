@@ -19,11 +19,11 @@ jobs:
           python-version: '3.11'
 
       - name: 패키지 설치
-        run: pip install -r requirements.txt
+        run: pip install -r ClaudeWork/requirements.txt
 
       - name: 정책 브리핑 실행
         env:
           BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
           SENDER_EMAIL:  ${{ secrets.SENDER_EMAIL }}
           SENDER_NAME:   ${{ secrets.SENDER_NAME }}
-        run: python briefing.py
+        run: python ClaudeWork/briefing.py
