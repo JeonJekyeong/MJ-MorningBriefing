@@ -23,8 +23,8 @@ jobs:
 
       - name: 정책 브리핑 실행
         env:
-          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
-          SENDER_EMAIL:  ${{ secrets.SENDER_EMAIL }}
-          SENDER_NAME:   ${{ secrets.SENDER_NAME }}
-          RECIPIENTS:    "lim_seong_jin@naver.com,jeon.jegyeong@gmail.com"
+          SMTP_KEY:     ${{ secrets.SMTP_KEY }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          SENDER_NAME:  ${{ secrets.SENDER_NAME }}
+          RECIPIENTS:   "lim_seong_jin@naver.com,jeon.jegyeong@gmail.com"
         run: python "(워크플로우) 모닝브리핑/briefing.py"

@@ -1,14 +1,17 @@
 import os
 import re
+import smtplib
 import requests
 import holidays
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from bs4 import BeautifulSoup
 from datetime import datetime, timezone, timedelta
 
 # ─── 설정 ───────────────────────────────────────────────────────
-BREVO_API_KEY = os.environ['BREVO_API_KEY']
-SENDER_EMAIL  = os.environ['SENDER_EMAIL']
-SENDER_NAME   = os.environ['SENDER_NAME']
+SMTP_KEY     = os.environ['SMTP_KEY']
+SENDER_EMAIL = os.environ['SENDER_EMAIL']
+SENDER_NAME  = os.environ['SENDER_NAME']
 
 KST        = timezone(timedelta(hours=9))
 TODAY_DT   = datetime.now(KST)
@@ -207,23 +210,17 @@ def get_recipients():
 # ─── 이메일 발송 ─────────────────────────────────────────────────
 
 def send_email(recipients, subject, html):
-    payload = {
-        'sender':      {'name': SENDER_NAME, 'email': SENDER_EMAIL},
-        'to':          recipients,
-        'subject':     subject,
-        'htmlContent': html,
-    }
-    res = requests.post(
-        'https://api.brevo.com/v3/smtp/email',
-        headers={
-            'api-key': BREVO_API_KEY,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        },
-        json=payload,
-        timeout=20
-    )
-    return res.status_code, res.json()
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From']    = f'{SENDER_NAME} <{SENDER_EMAIL}>'
+    msg['To']      = ', '.join(r['email'] for r in recipients)
+    msg.attach(MIMEText(html, 'html', 'utf-8'))
+
+    with smtplib.SMTP('smtp-relay.brevo.com', 587) as server:
+        server.starttls()
+        server.login(SENDER_EMAIL, SMTP_KEY)
+        server.sendmail(SENDER_EMAIL, [r['email'] for r in recipients], msg.as_string())
+    return 200, {'message': 'sent'}
 
 # ─── 메인 ────────────────────────────────────────────────────────
 
