@@ -1,0 +1,56 @@
+name: 테스트 이메일 발송
+
+on:
+  workflow_dispatch:
+
+jobs:
+  send-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Python 3.11 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 패키지 설치
+        run: pip install requests
+
+      - name: 테스트 이메일 발송
+        env:
+          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
+          SENDER_EMAIL:  ${{ secrets.SENDER_EMAIL }}
+          SENDER_NAME:   ${{ secrets.SENDER_NAME }}
+        run: |
+          python - <<'EOF'
+          import os, requests
+
+          api_key      = os.environ['BREVO_API_KEY']
+          sender_email = os.environ['SENDER_EMAIL']
+          sender_name  = os.environ['SENDER_NAME']
+
+          # 수신자 목록 (Brevo Contacts)
+          res = requests.get(
+              'https://api.brevo.com/v3/contacts',
+              headers={'api-key': api_key, 'Accept': 'application/json'},
+              params={'limit': 100},
+              timeout=10
+          )
+          contacts = res.json().get('contacts', [])
+          recipients = [{'email': c['email']} for c in contacts if not c.get('emailBlacklisted')]
+          print(f'수신자: {[r["email"] for r in recipients]}')
+
+          payload = {
+              'sender':      {'name': sender_name, 'email': sender_email},
+              'to':          recipients,
+              'subject':     '클로드 테스트',
+              'htmlContent': '<p>깃허브 테스트</p>',
+          }
+          r = requests.post(
+              'https://api.brevo.com/v3/smtp/email',
+              headers={'api-key': api_key, 'Content-Type': 'application/json'},
+              json=payload,
+              timeout=20
+          )
+          print(f'status={r.status_code} | {r.json()}')
+          EOF
