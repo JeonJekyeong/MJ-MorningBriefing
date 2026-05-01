@@ -198,21 +198,11 @@ def build_email(sections_html):
   </p>
 </div>'''
 
-# ─── 수신자 목록 (Brevo Contacts) ───────────────────────────────
+# ─── 수신자 목록 (환경변수 RECIPIENTS) ──────────────────────────
 
 def get_recipients():
-    try:
-        res = requests.get(
-            'https://api.brevo.com/v3/contacts',
-            headers={'api-key': BREVO_API_KEY, 'Accept': 'application/json'},
-            params={'limit': 100},
-            timeout=10
-        )
-        contacts = res.json().get('contacts', [])
-        return [{'email': c['email']} for c in contacts if not c.get('emailBlacklisted')]
-    except Exception as e:
-        print(f'수신자 조회 오류: {e}')
-        return []
+    raw = os.environ.get('RECIPIENTS', '')
+    return [{'email': e.strip()} for e in raw.split(',') if e.strip()]
 
 # ─── 이메일 발송 ─────────────────────────────────────────────────
 
